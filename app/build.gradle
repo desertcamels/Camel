@@ -60,6 +60,7 @@ android {
 }
 
 dependencies {
+    implementation "androidx.compose.runtime:runtime-livedata:$compose_version"
     implementation 'com.github.yausername.youtubedl-android:library:-SNAPSHOT'
     implementation 'com.github.yausername.youtubedl-android:ffmpeg:-SNAPSHOT' // Optional
     implementation 'com.github.yausername.youtubedl-android:aria2c:-SNAPSHOT' // Optional
