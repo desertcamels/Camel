@@ -13,9 +13,8 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.lifecycle.MutableLiveData
+import com.desertcamels.camel.MainActivity
 import com.desertcamels.camel.R
-import com.desertcamels.camel.utils.DownloadRepository
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLException
 import com.yausername.youtubedl_android.YoutubeDLRequest
@@ -25,59 +24,35 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-private const val NOTIFICATION_ID = 1
-private const val CHANNEL_ID = "DownloadChannel"
 private const val TAG = "DownloadService"
-class DownloadService() : Service() {
-    private lateinit var notificationManager: NotificationManagerCompat
-    private lateinit var downloadRepository: DownloadRepository
 
+class DownloadService : Service() {
+    private lateinit var notificationManager: NotificationManagerCompat
     override fun onCreate() {
         super.onCreate()
-        downloadRepository = DownloadRepository()
+        notificationManager = NotificationManagerCompat.from(this)
         try {
             YoutubeDL.getInstance().init(this)
         } catch (e: YoutubeDLException) {
             Log.e(TAG, "failed to initialize youtubedl-android", e)
         }
 
-        notificationManager = NotificationManagerCompat.from(this)
 
-    }
+        // Create the notification
+        val notification = buildNotification("Downloading")
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
+        // Start the service and show the notification
+        startForeground(1, notification)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val notification = createNotification("Download in progress")
-        startForeground(NOTIFICATION_ID, notification)
-        if (intent != null) {
-            intent.getStringExtra("URL")?.let {
-                CoroutineScope(Dispatchers.Main).launch {
-                    startDownload(it)
-                }
+        intent?.getStringExtra("URL")?.let {
+            CoroutineScope(Dispatchers.Main).launch {
+                startDownload(it)
             }
         }
-        return START_NOT_STICKY
-    }
 
-    private fun createNotification(contentText: String): Notification {
-        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Downloading File")
-            .setContentText(contentText)
-            .setSmallIcon(R.drawable.baseline_download_24)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "Download Channel",
-            NotificationManager.IMPORTANCE_DEFAULT
-        )
-        notificationManager.createNotificationChannel(channel)
-
-        return builder.build()
+        return START_STICKY
     }
 
     private suspend fun startDownload(url: String) = withContext(Dispatchers.IO) {
@@ -91,30 +66,43 @@ class DownloadService() : Service() {
             request
         ) { _: Float, _: Long, line: String ->
             Log.d(TAG, line)
-            downloadRepository.downloadStatus.postValue(line)
             notify(line)
 
         }
     }
 
+    private fun buildNotification(status: String): Notification {
+        val builder = NotificationCompat.Builder(this, "Download Channel")
+            .setContentTitle("Downloading")
+            .setContentText(status)
+            .setSmallIcon(R.drawable.baseline_download_24)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+
+        val channel = NotificationChannel(
+            "Download Channel",
+            "Download Channel",
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+        notificationManager.createNotificationChannel(channel)
+
+        return builder.build()
+    }
+
     private fun notify(status: String) {
+        val notification = buildNotification(status)
 
-        val notification = createNotification(status)
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+        notificationManager.notify(1, notification)
+    }
 
-            return
-        }
-        notificationManager.notify(NOTIFICATION_ID, notification)
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // Stop the service and remove the notification
+        stopForeground(STOP_FOREGROUND_REMOVE)
+    }
+
+    override fun onBind(p0: Intent?): IBinder? {
+        TODO("Not yet implemented")
     }
 }
