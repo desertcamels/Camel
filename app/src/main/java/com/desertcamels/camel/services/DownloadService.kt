@@ -1,20 +1,18 @@
 package com.desertcamels.camel.services
 
-import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Environment
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.desertcamels.camel.MainActivity
+import com.desertcamels.camel.MainActivityState
 import com.desertcamels.camel.R
+import com.desertcamels.camel.models.MainViewModel
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLException
 import com.yausername.youtubedl_android.YoutubeDLRequest
@@ -28,9 +26,13 @@ private const val TAG = "DownloadService"
 
 class DownloadService : Service() {
     private lateinit var notificationManager: NotificationManagerCompat
+    private lateinit var mainViewModel: MainViewModel
+    private lateinit var scope: CoroutineScope
     override fun onCreate() {
         super.onCreate()
+        mainViewModel = MainViewModel()
         notificationManager = NotificationManagerCompat.from(this)
+        scope = CoroutineScope(Dispatchers.IO)
         try {
             YoutubeDL.getInstance().init(this)
         } catch (e: YoutubeDLException) {
@@ -61,12 +63,19 @@ class DownloadService : Service() {
             "Camel"
         )
         val request = YoutubeDLRequest(url)
+        // echo Download complete when the download is finished
         request.addOption("-o", youtubeDLDir.absolutePath + "/%(title)s.%(ext)s")
         YoutubeDL.getInstance().execute(
             request
-        ) { _: Float, _: Long, line: String ->
+        ) { progress: Float, _: Long, line: String ->
             Log.d(TAG, line)
             notify(line)
+            scope.launch {
+                while (true) {
+                    MainActivityState.downloadState.emit(line)
+                    MainActivityState.progressState.emit(progress)
+                }
+            }
 
         }
     }

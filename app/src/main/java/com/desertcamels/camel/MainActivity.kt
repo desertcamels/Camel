@@ -13,19 +13,20 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.desertcamels.camel.screens.MainScreen
 import com.desertcamels.camel.services.DownloadService
 import com.desertcamels.camel.ui.theme.CamelTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 
+object MainActivityState {
+    val downloadState = MutableStateFlow("Downloading...")
+    val progressState: MutableStateFlow<Float> = MutableStateFlow(0f)
+}
 class MainActivity : ComponentActivity() {
     private val regexUrls =
         Regex("(?:(?:https?|ftp)://)?[\\w\\d\\-_]+(?:\\.[\\w\\d\\-_]+)+[\\w\\d\\-.,@?^=%&amp;:/~+#]*[\\w\\d@?^=%&amp;/~+#]")
-    private val downloadStatus = MutableLiveData<String>()
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
@@ -40,11 +41,6 @@ class MainActivity : ComponentActivity() {
 
         requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
 
-        val myApplication = application as App
-        myApplication.downloadRepository.downloadStatus.observe(this) { status ->
-            Log.d("MainActivity", status)
-        }
-
         setContent {
             CamelTheme {
                 // A surface container using the 'background' color from the theme
@@ -52,7 +48,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    DownloadStatus(downloadStatus = downloadStatus)
+                    MainScreen()
                 }
             }
         }
@@ -71,11 +67,6 @@ class MainActivity : ComponentActivity() {
         // system settings in an effort to convince the user to change
         // their decision.
         Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onStart() {
-        super.onStart()
-        handleIntent(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -106,8 +97,6 @@ class MainActivity : ComponentActivity() {
             if (sharedUrl.contains("youtu.be"))
                 sharedUrl = convertToFullUrl((sharedUrl))
 
-            downloadStatus.postValue("Downloading: $sharedUrl")
-
             println(sharedUrl)
             val downloadIntent = Intent(this, DownloadService::class.java)
             downloadIntent.putExtra("URL", sharedUrl)
@@ -121,17 +110,11 @@ class MainActivity : ComponentActivity() {
         return baseUrl + videoId
     }
 
-}
-
-@Composable
-fun DownloadStatus(downloadStatus: LiveData<String>) {
-    Text(text = downloadStatus.value ?: "Downloading...")
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    CamelTheme {
-        DownloadStatus(downloadStatus = MutableLiveData("Downloading: https://www.youtube.com/watch?v=QH2-TGUlwu4"))
+    override fun onDestroy() {
+        super.onDestroy()
+        //stop foreground service
+        val stopIntent = Intent(this, DownloadService::class.java)
+        stopService(stopIntent)
     }
+
 }
