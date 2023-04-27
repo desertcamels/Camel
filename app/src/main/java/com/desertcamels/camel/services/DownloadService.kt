@@ -68,13 +68,11 @@ class DownloadService : Service() {
         YoutubeDL.getInstance().execute(
             request
         ) { progress: Float, _: Long, line: String ->
-            Log.d(TAG, line)
+            //Log.d(TAG, line)
             notify(line)
-            scope.launch {
-                while (true) {
-                    MainActivityState.downloadState.emit(line)
-                    MainActivityState.progressState.emit(progress)
-                }
+
+            CoroutineScope(Dispatchers.Main).launch {
+                updateState(progress, line)
             }
 
         }
@@ -102,6 +100,16 @@ class DownloadService : Service() {
         val notification = buildNotification(status)
 
         notificationManager.notify(1, notification)
+    }
+
+    private suspend fun updateState(progress: Float, line: String) = withContext(Dispatchers.IO) {
+        MainActivityState.downloadState.emit(line)
+        MainActivityState.progressState.emit(progress)
+
+        if (line.contains("[download] 100%")) {
+            MainActivityState.downloadState.emit("Download complete.\nPlease share another 🔗 to download")
+            //stopSelf()
+        }
     }
 
     override fun onDestroy() {

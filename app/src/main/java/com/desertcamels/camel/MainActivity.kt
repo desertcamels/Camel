@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,14 +13,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.MutableLiveData
 import com.desertcamels.camel.screens.MainScreen
 import com.desertcamels.camel.services.DownloadService
 import com.desertcamels.camel.ui.theme.CamelTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
 object MainActivityState {
-    val downloadState = MutableStateFlow("Downloading...")
+    val downloadState = MutableStateFlow("Please share a 🔗 to download")
     val progressState: MutableStateFlow<Float> = MutableStateFlow(0f)
 }
 class MainActivity : ComponentActivity() {
@@ -52,6 +50,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        handleIntent(intent)
     }
 
     private fun onPermissionGranted() {
