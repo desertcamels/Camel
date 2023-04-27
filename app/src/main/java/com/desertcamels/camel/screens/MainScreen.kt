@@ -19,20 +19,23 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.style.TextAlign
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
+import com.google.accompanist.permissions.*
 
 private const val TAG = "MainScreen"
 private val viewModel: MainViewModel = MainViewModel()
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun MainScreen() {
     val downloadStatus by viewModel.downloadState.collectAsState()
     val progress by viewModel.progressState.collectAsState(0f)
+    val postNotificationPermissionState = rememberPermissionState(
+        Manifest.permission.POST_NOTIFICATIONS
+    )
+    val storagePermissionState = rememberPermissionState(
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    )
 
     Log.d(TAG, "MainScreen: $downloadStatus, $progress")
 
@@ -49,10 +52,13 @@ fun MainScreen() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            DownloadStatus(status = downloadStatus)
-            FeatureThatRequiresStoragePermission()
-            FeatureThatRequiresPostNotificationPermission()
+            if ((!postNotificationPermissionState.status.isGranted) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                FeatureThatRequiresPostNotificationPermission(postNotificationPermissionState)
+            } else if (!storagePermissionState.status.isGranted) {
+                FeatureThatRequiresStoragePermission(storagePermissionState)
+            } else {
+                DownloadStatus(status = downloadStatus)
+            }
         }
     }
 
@@ -105,18 +111,19 @@ fun AppFab() {
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-private fun FeatureThatRequiresStoragePermission() {
+private fun FeatureThatRequiresStoragePermission(permissionState: PermissionState) {
 
-    // WRITE_EXTERNAL_STORAGE permission state
-    val storagePermissionState = rememberPermissionState(
-        Manifest.permission.WRITE_EXTERNAL_STORAGE
-    )
-
-    if (storagePermissionState.status.isGranted) {
+    if (permissionState.status.isGranted) {
         Text("Storage permission Granted")
     } else {
-        Column {
-            val textToShow = if (storagePermissionState.status.shouldShowRationale) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val textToShow = if (permissionState.status.shouldShowRationale) {
                 // If the user has denied the permission but the rationale can be shown,
                 // then gently explain why the app requires this permission
                 "The storage is important for this app. Please grant the permission."
@@ -127,8 +134,8 @@ private fun FeatureThatRequiresStoragePermission() {
                 "Storage permission required for this feature to be available. " +
                         "Please grant the permission"
             }
-            Text(textToShow)
-            Button(onClick = { storagePermissionState.launchPermissionRequest() }) {
+            Text(textToShow, textAlign = TextAlign.Center)
+            Button(onClick = { permissionState.launchPermissionRequest() }) {
                 Text("Request permission")
             }
         }
@@ -138,18 +145,19 @@ private fun FeatureThatRequiresStoragePermission() {
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-private fun FeatureThatRequiresPostNotificationPermission() {
+private fun FeatureThatRequiresPostNotificationPermission(permissionState: PermissionState) {
 
-    // post notification permission state
-    val postNotificationPermissionState = rememberPermissionState(
-        Manifest.permission.POST_NOTIFICATIONS
-    )
-
-    if (postNotificationPermissionState.status.isGranted) {
+    if (permissionState.status.isGranted) {
         Text("Storage permission Granted")
     } else {
-        Column {
-            val textToShow = if (postNotificationPermissionState.status.shouldShowRationale) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val textToShow = if (permissionState.status.shouldShowRationale) {
                 // If the user has denied the permission but the rationale can be shown,
                 // then gently explain why the app requires this permission
                 "The storage is important for this app. Please grant the permission."
@@ -160,8 +168,8 @@ private fun FeatureThatRequiresPostNotificationPermission() {
                 "Storage permission required for this feature to be available. " +
                         "Please grant the permission"
             }
-            Text(textToShow)
-            Button(onClick = { postNotificationPermissionState.launchPermissionRequest() }) {
+            Text(textToShow, textAlign = TextAlign.Center)
+            Button(onClick = { permissionState.launchPermissionRequest() }) {
                 Text("Request permission")
             }
         }
@@ -169,6 +177,7 @@ private fun FeatureThatRequiresPostNotificationPermission() {
 }
 
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {

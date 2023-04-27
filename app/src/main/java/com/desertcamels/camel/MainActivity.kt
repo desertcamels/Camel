@@ -31,26 +31,10 @@ class MainActivity : ComponentActivity() {
     }
     private val regexUrls =
         Regex("(?:(?:https?|ftp)://)?[\\w\\d\\-_]+(?:\\.[\\w\\d\\-_]+)+[\\w\\d\\-.,@?^=%&amp;:/~+#]*[\\w\\d@?^=%&amp;/~+#]")
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
-                onPermissionGranted()
-            } else {
-                onPermissionDenied()
-            }
-        }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        }
 
         setContent {
             CamelTheme {
@@ -65,21 +49,6 @@ class MainActivity : ComponentActivity() {
         }
 
         handleIntent(intent)
-    }
-
-    private fun onPermissionGranted() {
-        // Permission is granted. Continue the action or workflow in your
-        // app.
-        Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun onPermissionDenied() {
-        // Explain to the user that the feature is unavailable because
-        // the features requires a permission that the user has denied.
-        // At the same time, respect the user's decision. Don't link to
-        // system settings in an effort to convince the user to change
-        // their decision.
-        Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
     }
 
     override fun onNewIntent(intent: Intent) {
