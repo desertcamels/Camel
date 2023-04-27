@@ -2,6 +2,7 @@ package com.desertcamels.camel
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.desertcamels.camel.screens.MainScreen
 import com.desertcamels.camel.services.DownloadService
 import com.desertcamels.camel.ui.theme.CamelTheme
@@ -23,6 +26,9 @@ object MainActivityState {
     val progressState: MutableStateFlow<Float> = MutableStateFlow(0f)
 }
 class MainActivity : ComponentActivity() {
+    companion object {
+        private const val REQUEST_CODE = 1
+    }
     private val regexUrls =
         Regex("(?:(?:https?|ftp)://)?[\\w\\d\\-_]+(?:\\.[\\w\\d\\-_]+)+[\\w\\d\\-.,@?^=%&amp;:/~+#]*[\\w\\d@?^=%&amp;/~+#]")
     private val requestPermissionLauncher =
@@ -33,11 +39,18 @@ class MainActivity : ComponentActivity() {
                 onPermissionDenied()
             }
         }
+
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
 
         setContent {
             CamelTheme {

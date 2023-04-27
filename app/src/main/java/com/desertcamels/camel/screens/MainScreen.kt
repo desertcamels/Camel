@@ -1,7 +1,9 @@
 package com.desertcamels.camel.screens
 
-import android.annotation.SuppressLint
+import android.Manifest
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -16,17 +18,22 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.*
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 
 private const val TAG = "MainScreen"
 private val viewModel: MainViewModel = MainViewModel()
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
     val downloadStatus by viewModel.downloadState.collectAsState()
     val progress by viewModel.progressState.collectAsState(0f)
+
     Log.d(TAG, "MainScreen: $downloadStatus, $progress")
 
     Scaffold(
@@ -36,12 +43,16 @@ fun MainScreen() {
         floatingActionButtonPosition = FabPosition.End,
     ) {
         Column(
-            modifier = Modifier.padding(it).fillMaxSize(),
+            modifier = Modifier
+                .padding(it)
+                .fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(16.dp))
             DownloadStatus(status = downloadStatus)
+            FeatureThatRequiresStoragePermission()
+            FeatureThatRequiresPostNotificationPermission()
         }
     }
 
@@ -90,6 +101,71 @@ fun AppFab() {
         onClick = { /*TODO*/ },
         content = { Icon(Icons.Filled.Add, contentDescription = "Add") }
     )
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+private fun FeatureThatRequiresStoragePermission() {
+
+    // WRITE_EXTERNAL_STORAGE permission state
+    val storagePermissionState = rememberPermissionState(
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    )
+
+    if (storagePermissionState.status.isGranted) {
+        Text("Storage permission Granted")
+    } else {
+        Column {
+            val textToShow = if (storagePermissionState.status.shouldShowRationale) {
+                // If the user has denied the permission but the rationale can be shown,
+                // then gently explain why the app requires this permission
+                "The storage is important for this app. Please grant the permission."
+            } else {
+                // If it's the first time the user lands on this feature, or the user
+                // doesn't want to be asked again for this permission, explain that the
+                // permission is required
+                "Storage permission required for this feature to be available. " +
+                        "Please grant the permission"
+            }
+            Text(textToShow)
+            Button(onClick = { storagePermissionState.launchPermissionRequest() }) {
+                Text("Request permission")
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+private fun FeatureThatRequiresPostNotificationPermission() {
+
+    // post notification permission state
+    val postNotificationPermissionState = rememberPermissionState(
+        Manifest.permission.POST_NOTIFICATIONS
+    )
+
+    if (postNotificationPermissionState.status.isGranted) {
+        Text("Storage permission Granted")
+    } else {
+        Column {
+            val textToShow = if (postNotificationPermissionState.status.shouldShowRationale) {
+                // If the user has denied the permission but the rationale can be shown,
+                // then gently explain why the app requires this permission
+                "The storage is important for this app. Please grant the permission."
+            } else {
+                // If it's the first time the user lands on this feature, or the user
+                // doesn't want to be asked again for this permission, explain that the
+                // permission is required
+                "Storage permission required for this feature to be available. " +
+                        "Please grant the permission"
+            }
+            Text(textToShow)
+            Button(onClick = { postNotificationPermissionState.launchPermissionRequest() }) {
+                Text("Request permission")
+            }
+        }
+    }
 }
 
 
