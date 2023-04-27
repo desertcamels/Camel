@@ -1,5 +1,6 @@
 package com.desertcamels.camel.screens
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -21,46 +22,30 @@ import androidx.compose.ui.text.style.TextAlign
 private const val TAG = "MainScreen"
 private val viewModel: MainViewModel = MainViewModel()
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
     val downloadStatus by viewModel.downloadState.collectAsState()
     val progress by viewModel.progressState.collectAsState(0f)
     Log.d(TAG, "MainScreen: $downloadStatus, $progress")
 
-    Surface {
+    Scaffold(
+        topBar = { AppTopBar() },
+        bottomBar = { AppBottomBar() },
+        floatingActionButton = { AppFab() },
+        floatingActionButtonPosition = FabPosition.End,
+    ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.padding(it).fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth()
-            ) {
-                AppTitle()
-            }
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                DownloadStatus(status = downloadStatus)
-            }
-            Column() {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp), horizontalArrangement = Arrangement.End
-                ) {
-                    AppFab()
-                }
-                AppNavigationBar()
-            }
-
+            Spacer(modifier = Modifier.height(16.dp))
+            DownloadStatus(status = downloadStatus)
         }
     }
+
+
 }
 
 @Composable
@@ -69,7 +54,7 @@ fun DownloadStatus(status: String) {
 }
 
 @Composable
-fun AppNavigationBar() {
+fun AppBottomBar() {
     NavigationBar {
         NavigationBarItem(
             icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
@@ -78,7 +63,7 @@ fun AppNavigationBar() {
             selected = true
         )
         NavigationBarItem(
-            icon = { Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Downloads") },
+            icon = { Icon(Icons.Filled.Done, contentDescription = "Downloads") },
             label = { Text("Downloads") },
             onClick = { /*TODO*/ },
             selected = false
@@ -88,13 +73,14 @@ fun AppNavigationBar() {
 }
 
 @Composable
-fun AppTitle() {
-    Text(
-        text = "Camel",
-        modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.Center,
-        style = MaterialTheme.typography.headlineLarge,
-        fontWeight = FontWeight.Black
+fun AppTopBar() {
+    SmallTopAppBar(
+        title = { Text("Camel") },
+        navigationIcon = {
+            IconButton(onClick = { /*TODO*/ }) {
+                Icon(Icons.Filled.Menu, contentDescription = "Menu")
+            }
+        }
     )
 }
 
