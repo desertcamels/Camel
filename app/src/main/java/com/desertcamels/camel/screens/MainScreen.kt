@@ -54,7 +54,7 @@ fun MainScreen() {
         ) {
             if ((!postNotificationPermissionState.status.isGranted) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 FeatureThatRequiresPostNotificationPermission(postNotificationPermissionState)
-            } else if (!storagePermissionState.status.isGranted) {
+            } else if (!storagePermissionState.status.isGranted && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                 FeatureThatRequiresStoragePermission(storagePermissionState)
             } else {
                 DownloadStatus(status = downloadStatus)
@@ -160,12 +160,12 @@ private fun FeatureThatRequiresPostNotificationPermission(permissionState: Permi
             val textToShow = if (permissionState.status.shouldShowRationale) {
                 // If the user has denied the permission but the rationale can be shown,
                 // then gently explain why the app requires this permission
-                "The storage is important for this app. Please grant the permission."
+                "Notifications are important for this app. Please grant the permission."
             } else {
                 // If it's the first time the user lands on this feature, or the user
                 // doesn't want to be asked again for this permission, explain that the
                 // permission is required
-                "Storage permission required for this feature to be available. " +
+                "Notification permission required for this feature to be available. " +
                         "Please grant the permission"
             }
             Text(textToShow, textAlign = TextAlign.Center)
