@@ -39,9 +39,15 @@ fun AppDrawer() {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // create vector image header for the app drawer
+        Icon(
+            imageVector = Icons.Default.AccountCircle,
+            contentDescription = "Account Circle",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp),
+        )
         Text(text = "This is the drawer")
     }
 }
@@ -68,8 +74,8 @@ fun MainScreenContent() {
     ) {
         Column(
             modifier = Modifier
-                .padding(it)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .padding(it),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
