@@ -28,16 +28,37 @@ private val viewModel: MainViewModel = MainViewModel()
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun MainScreen() {
+    ModalNavigationDrawer(drawerContent = { AppDrawer() }) {
+        MainScreenContent()
+    }
+}
+
+@Composable
+fun AppDrawer() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "This is the drawer")
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreenContent() {
     val downloadStatus by viewModel.downloadState.collectAsState()
     val progress by viewModel.progressState.collectAsState(0f)
+    Log.d(TAG, "MainScreen: $downloadStatus, $progress")
     val postNotificationPermissionState = rememberPermissionState(
         Manifest.permission.POST_NOTIFICATIONS
     )
     val storagePermissionState = rememberPermissionState(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
-
-    Log.d(TAG, "MainScreen: $downloadStatus, $progress")
 
     Scaffold(
         topBar = { AppTopBar() },
@@ -135,6 +156,7 @@ private fun FeatureThatRequiresStoragePermission(permissionState: PermissionStat
                         "Please grant the permission"
             }
             Text(textToShow, textAlign = TextAlign.Center)
+            Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = { permissionState.launchPermissionRequest() }) {
                 Text("Request permission")
             }
@@ -169,6 +191,7 @@ private fun FeatureThatRequiresPostNotificationPermission(permissionState: Permi
                         "Please grant the permission"
             }
             Text(textToShow, textAlign = TextAlign.Center)
+            Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = { permissionState.launchPermissionRequest() }) {
                 Text("Request permission")
             }
