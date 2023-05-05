@@ -5,6 +5,7 @@ import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Intent
 import android.os.Environment
 import android.os.IBinder
+import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -82,15 +83,16 @@ class DownloadService : Service() {
     }
 
     private fun buildNotification(status: String): Notification {
-        val builder = NotificationCompat.Builder(this, "Download Channel")
+        val builder = NotificationCompat.Builder(this, "DownloadService")
             .setContentTitle("Downloading")
             .setContentText(status)
             .setSmallIcon(R.drawable.baseline_download_24)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(mainPendingIntent)
+            .setOnlyAlertOnce(true)
 
         val channel = NotificationChannel(
-            "Download Channel",
+            "DownloadService",
             "Download Channel",
             NotificationManager.IMPORTANCE_DEFAULT
         )
