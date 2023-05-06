@@ -5,14 +5,12 @@ import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Intent
 import android.os.Environment
 import android.os.IBinder
-import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.desertcamels.camel.MainActivity
 import com.desertcamels.camel.MainActivityState
 import com.desertcamels.camel.R
-import com.desertcamels.camel.models.MainViewModel
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLException
 import com.yausername.youtubedl_android.YoutubeDLRequest
@@ -26,13 +24,11 @@ private const val TAG = "DownloadService"
 
 class DownloadService : Service() {
     private lateinit var notificationManager: NotificationManagerCompat
-    private lateinit var mainViewModel: MainViewModel
     private lateinit var scope: CoroutineScope
     private lateinit var mainIntent: Intent
     private lateinit var mainPendingIntent: PendingIntent
     override fun onCreate() {
         super.onCreate()
-        mainViewModel = MainViewModel()
         notificationManager = NotificationManagerCompat.from(this)
         scope = CoroutineScope(Dispatchers.IO)
         mainIntent = Intent(this, MainActivity::class.java)
