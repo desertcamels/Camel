@@ -53,6 +53,7 @@ import com.google.accompanist.permissions.shouldShowRationale
 import kotlinx.coroutines.flow.MutableStateFlow
 
 private const val TAG = "MainActivity"
+
 object MainActivityState {
     val downloadState = MutableStateFlow("Please share a 🔗 to download")
     val progressState: MutableStateFlow<Float> = MutableStateFlow(0f)
@@ -67,14 +68,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         //request for post notification permission
-       /* val requestPermissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-                if (isGranted) {
-                    Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
-                }
-            }*/
+        /* val requestPermissionLauncher =
+             registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+                 if (isGranted) {
+                     Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show()
+                 } else {
+                     Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+                 }
+             }*/
 
         setContent {
             CamelTheme {
