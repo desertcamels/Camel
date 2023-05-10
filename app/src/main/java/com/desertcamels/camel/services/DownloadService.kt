@@ -17,7 +17,6 @@ import com.desertcamels.camel.MainActivityState
 import com.desertcamels.camel.R
 import com.yausername.aria2c.Aria2c
 import com.yausername.ffmpeg.FFmpeg
-import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDL.getInstance
 import com.yausername.youtubedl_android.YoutubeDLException
 import com.yausername.youtubedl_android.YoutubeDLRequest
@@ -42,7 +41,7 @@ class DownloadService : Service() {
         mainIntent = Intent(this, MainActivity::class.java)
         mainPendingIntent = PendingIntent.getActivity(this, 1, mainIntent, FLAG_IMMUTABLE)
         try {
-            YoutubeDL.getInstance().init(this)
+            getInstance().init(this)
             FFmpeg.getInstance().init(this);
             Aria2c.getInstance().init(this);
         } catch (e: YoutubeDLException) {

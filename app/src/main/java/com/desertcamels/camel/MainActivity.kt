@@ -63,19 +63,10 @@ class MainActivity : ComponentActivity() {
     private val regexUrls =
         Regex("(?:(?:https?|ftp)://)?[\\w\\d\\-_]+(?:\\.[\\w\\d\\-_]+)+[\\w\\d\\-.,@?^=%&amp;:/~+#]*[\\w\\d@?^=%&amp;/~+#]")
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        //request for post notification permission
-        /* val requestPermissionLauncher =
-             registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-                 if (isGranted) {
-                     Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show()
-                 } else {
-                     Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
-                 }
-             }*/
 
         setContent {
             CamelTheme {
@@ -84,7 +75,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen()
+                    ModalNavigationDrawer(drawerContent = { AppDrawer() }) {
+                        MainScreen()
+                    }
                 }
             }
         }
@@ -146,34 +139,6 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun MainScreen() {
-    ModalNavigationDrawer(drawerContent = { AppDrawer() }) {
-        MainScreenContent()
-    }
-}
-
-@Composable
-fun AppDrawer() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-    ) {
-        // create vector image header for the app drawer
-        Icon(
-            imageVector = Icons.Default.AccountCircle,
-            contentDescription = "Account Circle",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(150.dp),
-        )
-        Text(text = "This is the drawer")
-    }
-}
-
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
-@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
-@Composable
-fun MainScreenContent() {
     val downloadStatus by MainActivityState.downloadState.collectAsState()
     val progress by MainActivityState.progressState.collectAsState(0f)
     Log.d(TAG, "MainScreen: $downloadStatus, $progress")
@@ -206,8 +171,25 @@ fun MainScreenContent() {
             }
         }
     }
+}
 
-
+@Composable
+fun AppDrawer() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+    ) {
+        // create vector image header for the app drawer
+        Icon(
+            imageVector = Icons.Default.AccountCircle,
+            contentDescription = "Account Circle",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp),
+        )
+        Text(text = "This is the drawer")
+    }
 }
 
 @Composable
