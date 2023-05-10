@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
@@ -40,9 +42,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberImagePainter
 import com.desertcamels.camel.services.DownloadService
 import com.desertcamels.camel.ui.theme.CamelTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -54,9 +58,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 private const val TAG = "MainActivity"
 
-object MainActivityState {
+data class VideoInfo(val title: String?, val thumbnail: String?, val url: String?)
+
+object DownloadState {
     val downloadState = MutableStateFlow("Please share a 🔗 to download")
     val progressState: MutableStateFlow<Float> = MutableStateFlow(0f)
+    val videoState: MutableStateFlow<VideoInfo?> = MutableStateFlow(null)
 }
 
 class MainActivity : ComponentActivity() {
@@ -139,8 +146,9 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun MainScreen() {
-    val downloadStatus by MainActivityState.downloadState.collectAsState()
-    val progress by MainActivityState.progressState.collectAsState(0f)
+    val downloadStatus by DownloadState.downloadState.collectAsState()
+    val videoState by DownloadState.videoState.collectAsState()
+    val progress by DownloadState.progressState.collectAsState(0f)
     Log.d(TAG, "MainScreen: $downloadStatus, $progress")
     val postNotificationPermissionState = rememberPermissionState(
         Manifest.permission.POST_NOTIFICATIONS
@@ -167,6 +175,8 @@ fun MainScreen() {
             } else if (!storagePermissionState.status.isGranted && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                 FeatureThatRequiresStoragePermission(storagePermissionState)
             } else {
+                Thumbnail(videoState = videoState)
+                Spacer(modifier = Modifier.height(16.dp))
                 DownloadStatus(status = downloadStatus)
             }
         }
@@ -189,6 +199,26 @@ fun AppDrawer() {
                 .height(150.dp),
         )
         Text(text = "This is the drawer")
+    }
+}
+
+@Composable
+fun Thumbnail(videoState: VideoInfo?) {
+    if (videoState != null) {
+        Image(
+            painter = rememberImagePainter(data = videoState?.thumbnail, builder = {
+                crossfade(true)
+                placeholder(R.drawable.camel_thumbnail_placeholder)
+                error(R.drawable.baseline_error_24)
+            }),
+            contentDescription = "Thumbnail of ${videoState?.title}",
+        )
+    } else {
+        Image(
+            painter = painterResource(id = R.drawable.camel_thumbnail_placeholder),
+            contentDescription = "Placeholder until video is loaded",
+            modifier = Modifier.size(200.dp)
+        )
     }
 }
 

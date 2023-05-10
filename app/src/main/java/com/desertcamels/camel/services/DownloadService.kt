@@ -13,8 +13,9 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.desertcamels.camel.MainActivity
-import com.desertcamels.camel.MainActivityState
+import com.desertcamels.camel.DownloadState
 import com.desertcamels.camel.R
+import com.desertcamels.camel.VideoInfo
 import com.yausername.aria2c.Aria2c
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL.getInstance
@@ -71,21 +72,26 @@ class DownloadService : Service() {
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
             "Camel"
         )
+
+        val streamInfo = getInstance().getInfo(url)
         val request = YoutubeDLRequest(url)
         // echo Download complete when the download is finished
         request.addOption("-o", youtubeDLDir.absolutePath + "/%(title)s.%(ext)s")
         request.addOption("--downloader", "libaria2c.so")
         request.addOption("--external-downloader-args", "aria2c:\"--summary-interval=1\"")
-        //val streamInfo = getInstance().getInfo(url)
-        //println(streamInfo.title)
+
         getInstance().execute(
             request
         ) { progress: Float, _: Long, line: String ->
-            //Log.d(TAG, line)
             notify(progress.toString())
-            Log.d(TAG, progress.toString())
+            val videoInfo = VideoInfo(
+                streamInfo.title,
+                streamInfo.thumbnail,
+                streamInfo.url
+            )
+            Log.d(TAG, videoInfo.toString())
             CoroutineScope(Dispatchers.Main).launch {
-                updateState(progress, line)
+                updateStates(progress, line, videoInfo)
             }
 
         }
@@ -116,15 +122,19 @@ class DownloadService : Service() {
         notificationManager.notify(1, notification)
     }
 
-    private suspend fun updateState(progress: Float, line: String) = withContext(Dispatchers.IO) {
-        MainActivityState.downloadState.emit(line)
-        MainActivityState.progressState.emit(progress)
+    private suspend fun updateStates(progress: Float, line: String, video: VideoInfo) =
+        withContext(Dispatchers.IO) {
+            DownloadState.downloadState.emit(line)
+            DownloadState.progressState.emit(progress)
+            DownloadState.videoState.emit(video)
 
-        if (line.contains("[download] 100%")) {
-            MainActivityState.downloadState.emit("Download complete.\nPlease share another 🔗 to download")
-            //stopSelf()
+            Log.d(TAG, video.toString())
+
+            if (line.contains("[download] 100%")) {
+                DownloadState.downloadState.emit("Download complete.\nPlease share another 🔗 to download")
+                //stopSelf()
+            }
         }
-    }
 
     override fun onDestroy() {
         super.onDestroy()
