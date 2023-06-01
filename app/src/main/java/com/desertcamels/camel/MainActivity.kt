@@ -115,14 +115,12 @@ class MainActivity : ComponentActivity() {
             val urls = regexUrls.findAll(sharedText).map { it.value }.toList()
             var sharedUrl = urls.first()
 
-            println(sharedUrl)
-
             if (sharedUrl.contains("youtu.be"))
                 sharedUrl = convertToFullUrl((sharedUrl))
 
-            println(sharedUrl)
             val downloadIntent = Intent(this, DownloadService::class.java)
             downloadIntent.putExtra("URL", sharedUrl)
+            DownloadState.downloadState.tryEmit("Starting download service...")
             startService(downloadIntent)
         }
     }
@@ -206,12 +204,12 @@ fun AppDrawer() {
 fun Thumbnail(videoState: VideoInfo?) {
     if (videoState != null) {
         Image(
-            painter = rememberImagePainter(data = videoState?.thumbnail, builder = {
+            painter = rememberImagePainter(data = videoState.thumbnail, builder = {
                 crossfade(true)
                 placeholder(R.drawable.camel_thumbnail_placeholder)
                 error(R.drawable.baseline_error_24)
             }),
-            contentDescription = "Thumbnail of ${videoState?.title}",
+            contentDescription = "Thumbnail of ${videoState.title}",
         )
     } else {
         Image(

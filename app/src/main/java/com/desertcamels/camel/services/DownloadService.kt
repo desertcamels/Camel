@@ -12,8 +12,8 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.desertcamels.camel.MainActivity
 import com.desertcamels.camel.DownloadState
+import com.desertcamels.camel.MainActivity
 import com.desertcamels.camel.R
 import com.desertcamels.camel.VideoInfo
 import com.yausername.aria2c.Aria2c
@@ -43,8 +43,8 @@ class DownloadService : Service() {
         mainPendingIntent = PendingIntent.getActivity(this, 1, mainIntent, FLAG_IMMUTABLE)
         try {
             getInstance().init(this)
-            FFmpeg.getInstance().init(this);
-            Aria2c.getInstance().init(this);
+            FFmpeg.getInstance().init(this)
+            Aria2c.getInstance().init(this)
         } catch (e: YoutubeDLException) {
             Log.e(TAG, "failed to initialize youtubedl-android", e)
         }
@@ -76,14 +76,16 @@ class DownloadService : Service() {
         val streamInfo = getInstance().getInfo(url)
         val request = YoutubeDLRequest(url)
         // echo Download complete when the download is finished
-        request.addOption("-o", youtubeDLDir.absolutePath + "/%(title)s.%(ext)s")
+        request.addOption("-o", youtubeDLDir.absolutePath + "/%(id)s.%(ext)s")
         request.addOption("--downloader", "libaria2c.so")
         request.addOption("--external-downloader-args", "aria2c:\"--summary-interval=1\"")
+        request.addOption("--no-mtime")
+
+        notify("Download in progress")
 
         getInstance().execute(
             request
         ) { progress: Float, _: Long, line: String ->
-            notify(progress.toString())
             val videoInfo = VideoInfo(
                 streamInfo.title,
                 streamInfo.thumbnail,
@@ -98,13 +100,19 @@ class DownloadService : Service() {
     }
 
     private fun buildNotification(status: String): Notification {
+//        val shutdownIntent = Intent(this, DownloadService::class.java).apply {
+//            action = "com.desertcamels.andro id.DownloadService.SHUTDOWN"
+//            stopSelf()
+//        }
+//        val shutdownPendingIntent: PendingIntent =
+//            PendingIntent.getService(this, 0, shutdownIntent, FLAG_IMMUTABLE)
+
         val builder = NotificationCompat.Builder(this, "DownloadService")
             .setContentTitle("Downloading")
             .setContentText(status)
             .setSmallIcon(R.drawable.baseline_download_24)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(mainPendingIntent)
-            .setOnlyAlertOnce(true)
 
         val channel = NotificationChannel(
             "DownloadService",
@@ -124,15 +132,16 @@ class DownloadService : Service() {
 
     private suspend fun updateStates(progress: Float, line: String, video: VideoInfo) =
         withContext(Dispatchers.IO) {
+            val completeMessage = "Download complete.\n" +
+                    "Please share another 🔗 to download"
             DownloadState.downloadState.emit(line)
             DownloadState.progressState.emit(progress)
             DownloadState.videoState.emit(video)
 
-            Log.d(TAG, video.toString())
+            if (line.lowercase().contains("[download] 100%") or line.lowercase().contains("merging")) {
+                DownloadState.downloadState.emit(completeMessage)
+                notify(completeMessage)
 
-            if (line.contains("[download] 100%")) {
-                DownloadState.downloadState.emit("Download complete.\nPlease share another 🔗 to download")
-                //stopSelf()
             }
         }
 
